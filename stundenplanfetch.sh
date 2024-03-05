@@ -1,10 +1,12 @@
 #!/bin/bash
 
-creds_file=".pdf_creds.txt"
-output_pdf="output.pdf"
-output_text="extracted_text.txt"
-custom_lessons_file="custom_lessons.txt"
-settings_file="settings.txt"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+creds_file="${script_dir}/.pdf_creds.txt"
+output_pdf="${script_dir}/output.pdf"
+output_text="${script_dir}/extracted_text.txt"
+custom_lessons_file="${script_dir}/custom_lessons.txt"
+settings_file="${script_dir}/settings.txt"
 green_color='\033[0;32m'  # ANSI escape code for green
 reset_color='\033[0m'     # ANSI escape code to reset color
 
@@ -63,6 +65,66 @@ fi
 # Read the settings
 source "$settings_file"
 
+# Check if a day is provided as a command-line argument
+if [ $# -eq 1 ]; then
+    case $1 in
+      mo) day="montag";;
+      di) day="dienstag";;
+      mi) day="mittwoch";;
+      do) day="donnerstag";;
+      fr) day="freitag";;
+      set) change_settings
+           exit 0;;
+      exit) exit 0;;
+      *) echo "Invalid input. Please enter mo, di, mi, do, fr, 'set', or 'exit'."
+         exit 1;;
+    esac
+
+    url="https://bs-korbach.de/images/vertretungsplan/${day}.pdf"
+    echo -e "\e[1;34m$url\e[0m"  # Light blue color for the URL
+    
+    # Use wget with credentials to download the PDF
+    wget --user="$username" --password="$password" "$url" -O "$output_pdf" > /dev/null 2>&1
+
+    # Extract text from the PDF using different options
+    pdftotext -layout -eol unix "$output_pdf" "$output_text"
+
+    # Print the extracted text to the console with or without coloring based on settings
+    awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$PRINTALL" '
+      BEGIN {
+        IGNORECASE = 1;
+      }
+      NR==FNR {
+        custom_lessons[$0];
+        next;
+      }
+      {
+        for (lesson in custom_lessons) {
+          if (index($0, lesson) > 0) {
+            if (print_all) {
+              print green_color $0 reset_color;
+            } else {
+              colored_lines[FNR]=1;
+            }
+          }
+        }
+      }
+      {
+        if (print_all) {
+          next;
+        }
+      }
+      FNR in colored_lines {
+        print green_color $0 reset_color;
+      }
+    ' "$custom_lessons_file" "$output_text"
+
+    # Clean up: remove the downloaded PDF
+    rm "$output_pdf"
+
+    exit 0
+fi
+
 # Prompt user for the day or set to add custom lessons
 echo "Enter the day (mo, di, mi, do, fr), type 'set' for settings, or 'exit' to quit:"
 read input
@@ -81,9 +143,7 @@ case $input in
 esac
 
 url="https://bs-korbach.de/images/vertretungsplan/${day}.pdf"
-
-echo "Fetching PDF from $url..."
-
+echo -e "\e[1;34m$url\e[0m"  # Light blue color for the URL
 # Use wget with credentials to download the PDF
 wget --user="$username" --password="$password" "$url" -O "$output_pdf" > /dev/null 2>&1
 
@@ -91,22 +151,32 @@ wget --user="$username" --password="$password" "$url" -O "$output_pdf" > /dev/nu
 pdftotext -layout -eol unix "$output_pdf" "$output_text"
 
 # Print the extracted text to the console with or without coloring based on settings
-awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$PRINTALL" 'BEGIN {IGNORECASE=1}
-  NR==FNR { custom_lessons[$0]; next }
+awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$PRINTALL" '
+  BEGIN {
+    IGNORECASE = 1;
+  }
+  NR==FNR {
+    custom_lessons[$0];
+    next;
+  }
   {
     for (lesson in custom_lessons) {
       if (index($0, lesson) > 0) {
         if (print_all) {
           print green_color $0 reset_color;
         } else {
-          print $0;
+          colored_lines[FNR]=1;
         }
-        next;
       }
     }
+  }
+  {
     if (print_all) {
-      print $0;
+      next;
     }
+  }
+  FNR in colored_lines {
+    print green_color $0 reset_color;
   }
 ' "$custom_lessons_file" "$output_text"
 
