@@ -1,4 +1,3 @@
-
 # Stundenplan Fetcher
 
 ## Beschreibung
