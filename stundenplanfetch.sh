@@ -4,6 +4,7 @@ creds_file=".pdf_creds.txt"
 output_pdf="output.pdf"
 output_text="extracted_text.txt"
 custom_lessons_file="custom_lessons.txt"
+settings_file="settings.txt"
 green_color='\033[0;32m'  # ANSI escape code for green
 reset_color='\033[0m'     # ANSI escape code to reset color
 
@@ -22,6 +23,14 @@ add_custom_lesson() {
     read custom_lesson
     echo "$custom_lesson" >> "$custom_lessons_file"
     echo "Custom lesson added: $custom_lesson"
+}
+
+# Function to change settings
+change_settings() {
+    echo "Enter 1 to print all lines, or 0 to print only colored lines:"
+    read print_all_setting
+    echo "PRINTALL=$print_all_setting" > "$settings_file"
+    echo "Settings updated."
 }
 
 # Check if credentials file exists
@@ -44,19 +53,30 @@ else
     fi
 fi
 
-# Prompt user for the day or set to add custom lessons
-echo "Enter the day (mo, di, mi, do, fr) or type 'set' to add custom lessons:"
-read day
+# Check if settings file exists
+if [ ! -e "$settings_file" ]; then
+    echo "No settings found. Creating a new one..."
+    echo "PRINTALL=1" > "$settings_file"
+    echo "Settings created."
+fi
 
-case $day in
+# Read the settings
+source "$settings_file"
+
+# Prompt user for the day or set to add custom lessons
+echo "Enter the day (mo, di, mi, do, fr), type 'set' for settings, or 'exit' to quit:"
+read input
+
+case $input in
   mo) day="montag";;
   di) day="dienstag";;
   mi) day="mittwoch";;
   do) day="donnerstag";;
   fr) day="freitag";;
-  set) add_custom_lesson
+  set) change_settings
        exit 0;;
-  *) echo "Invalid day. Please enter mo, di, mi, do, or fr."
+  exit) exit 0;;
+  *) echo "Invalid input. Please enter mo, di, mi, do, fr, 'set', or 'exit'."
      exit 1;;
 esac
 
@@ -65,22 +85,28 @@ url="https://bs-korbach.de/images/vertretungsplan/${day}.pdf"
 echo "Fetching PDF from $url..."
 
 # Use wget with credentials to download the PDF
-wget --user="$username" --password="$password" "$url" -O "$output_pdf"
+wget --user="$username" --password="$password" "$url" -O "$output_pdf" > /dev/null 2>&1
 
 # Extract text from the PDF using different options
 pdftotext -layout -eol unix "$output_pdf" "$output_text"
 
-# Print the extracted text to the console with case-insensitive color for custom lessons
-awk -v green_color="$green_color" -v reset_color="$reset_color" 'BEGIN {IGNORECASE=1}
+# Print the extracted text to the console with or without coloring based on settings
+awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$PRINTALL" 'BEGIN {IGNORECASE=1}
   NR==FNR { custom_lessons[$0]; next }
   {
     for (lesson in custom_lessons) {
       if (index($0, lesson) > 0) {
-        print green_color $0 reset_color;
+        if (print_all) {
+          print green_color $0 reset_color;
+        } else {
+          print $0;
+        }
         next;
       }
     }
-    print $0;
+    if (print_all) {
+      print $0;
+    }
   }
 ' "$custom_lessons_file" "$output_text"
 
