@@ -1,18 +1,18 @@
 import discord
-from discord.ext import commands
 import subprocess
+from discord.ext import commands
 
-# Define your bot's command prefix
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Define your command
 @bot.command(name='stundenplan')
 async def stundenplan(ctx, day):
-    # Assuming your original script is named 'stundenplanfetch.sh'
-    result = subprocess.run(['./stundenplanfetch.sh', day], stdout=subprocess.PIPE, text=True)
-    
-    # Send the result to the Discord channel
-    await ctx.send(f'```\n{result.stdout}\n```')
+    try:
+        result = subprocess.run(['./stundenplanfetch_dc.sh', day], capture_output=True, text=True, check=True)
+        output = result.stdout
+    except subprocess.CalledProcessError as e:
+        output = e.stderr
 
-# Run the bot with your token
-bot.run('2o6p1kYrycqiina6DG2CKCUzrg_L-lK3')
+    await ctx.send(f'\n{output}\n')
+
+bot.run('MTE0ODMxNjI2MTMwMjk0Mzc0OA.GTEtFY.LPshd5-PSkFbzScirpKvdVOlHiNZ5lIIEydhcI')

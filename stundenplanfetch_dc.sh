@@ -1,14 +1,10 @@
 #!/bin/bash
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-creds_file="${script_dir}/.pdf_creds.txt"
-output_pdf="${script_dir}/output.pdf"
-output_text="${script_dir}/extracted_text.txt"
-custom_lessons_file="${script_dir}/custom_lessons.txt"
-settings_file="${script_dir}/settings.txt"
-green_color='\033[0;32m'  # ANSI escape code for green
-reset_color='\033[0m'     # ANSI escape code to reset color
+creds_file=".pdf_creds.txt"
+output_pdf="output.pdf"
+output_text="extracted_text.txt"
+custom_lessons_file="custom_lessons.txt"
+settings_file="settings.txt"
 
 # Function to prompt user for credentials
 get_credentials() {
@@ -81,7 +77,7 @@ if [ $# -eq 1 ]; then
     esac
 
     url="https://bs-korbach.de/images/vertretungsplan/${day}.pdf"
-    echo -e "\e[1;34m$url\e[0m"  # Light blue color for the URL
+    echo "${url}"  # Light blue color for the URL
     
     # Use wget with credentials to download the PDF
     wget --user="$username" --password="$password" "$url" -O "$output_pdf" > /dev/null 2>&1
@@ -89,15 +85,8 @@ if [ $# -eq 1 ]; then
     # Extract text from the PDF using different options
     pdftotext -layout -eol unix "$output_pdf" "$output_text"
 
-    # Check if the extracted text file is empty
-    if [ ! -s "$output_text" ]; then
-        echo "No text extracted from the PDF. Exiting."
-        rm "$output_pdf"  # Clean up: remove the downloaded PDF
-        exit 0
-    fi
-
     # Print the extracted text to the console with or without coloring based on settings
-    awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$PRINTALL" '
+    awk -v print_all="$PRINTALL" '
       BEGIN {
         IGNORECASE = 1;
       }
@@ -109,7 +98,8 @@ if [ $# -eq 1 ]; then
         for (lesson in custom_lessons) {
           if (index($0, lesson) > 0) {
             if (print_all) {
-              print green_color $0 reset_color;
+              gsub(/\*+$/, "", $0);  # Remove trailing asterisks
+              print $0;
             } else {
               colored_lines[FNR]=1;
             }
@@ -122,13 +112,15 @@ if [ $# -eq 1 ]; then
         }
       }
       FNR in colored_lines {
-        print green_color $0 reset_color;
+        gsub(/\*+$/, "", $0);  # Remove trailing asterisks
+        print $0;
       }
     ' "$custom_lessons_file" "$output_text"
 
-    # Clean up: remove the downloaded PDF and text file
+
+    # Clean up: remove the downloaded PDF
     rm "$output_pdf"
-    rm "$output_text"
+    rm extracted_text.txt
 
     exit 0
 fi
@@ -151,22 +143,15 @@ case $input in
 esac
 
 url="https://bs-korbach.de/images/vertretungsplan/${day}.pdf"
-echo -e "\e[1;34m$url\e[0m"  # Light blue color for the URL
+echo "${url}"  # Light blue color for the URL
 # Use wget with credentials to download the PDF
 wget --user="$username" --password="$password" "$url" -O "$output_pdf" > /dev/null 2>&1
 
 # Extract text from the PDF using different options
 pdftotext -layout -eol unix "$output_pdf" "$output_text"
 
-# Check if the extracted text file is empty
-if [ ! -s "$output_text" ]; then
-    echo "No text extracted from the PDF. Exiting."
-    rm "$output_pdf"  # Clean up: remove the downloaded PDF
-    exit 0
-fi
-
 # Print the extracted text to the console with or without coloring based on settings
-awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$PRINTALL" '
+awk -v print_all="$PRINTALL" '
   BEGIN {
     IGNORECASE = 1;
   }
@@ -178,7 +163,7 @@ awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$P
     for (lesson in custom_lessons) {
       if (index($0, lesson) > 0) {
         if (print_all) {
-          print green_color $0 reset_color;
+          print $0;
         } else {
           colored_lines[FNR]=1;
         }
@@ -191,12 +176,10 @@ awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$P
     }
   }
   FNR in colored_lines {
-    print green_color $0 reset_color;
+    print $0;
   }
 ' "$custom_lessons_file" "$output_text"
 
-# Clean up: remove the downloaded PDF and text file
+# Clean up: remove the downloaded PDF
 rm "$output_pdf"
-rm "$output_text"
-
-echo "Extracted text saved to $output_text"
+rm extracted_text.txt
