@@ -109,6 +109,7 @@ if [ $# -eq 1 ]; then
         for (lesson in custom_lessons) {
           if (index($0, lesson) > 0) {
             if (print_all) {
+              gsub(/\*{6}/, "", $0);  # Remove all occurrences of ******
               print green_color $0 reset_color;
             } else {
               colored_lines[FNR]=1;
@@ -118,10 +119,12 @@ if [ $# -eq 1 ]; then
       }
       {
         if (print_all) {
+          gsub(/\*{6}/, "", $0);  # Remove all occurrences of ******
           next;
         }
       }
       FNR in colored_lines {
+        gsub(/\*{6}/, "", $0);  # Remove all occurrences of ******
         print green_color $0 reset_color;
       }
     ' "$custom_lessons_file" "$output_text"
@@ -178,6 +181,7 @@ awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$P
     for (lesson in custom_lessons) {
       if (index($0, lesson) > 0) {
         if (print_all) {
+          gsub(/\*{6}/, "", $0);  # Remove all occurrences of ******
           print green_color $0 reset_color;
         } else {
           colored_lines[FNR]=1;
@@ -187,10 +191,12 @@ awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$P
   }
   {
     if (print_all) {
+      gsub(/\*{6}/, "", $0);  # Remove all occurrences of ******
       next;
     }
   }
   FNR in colored_lines {
+    gsub(/\*{6}/, "", $0);  # Remove all occurrences of ******
     print green_color $0 reset_color;
   }
 ' "$custom_lessons_file" "$output_text"
