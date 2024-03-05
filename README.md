@@ -4,7 +4,7 @@
 
 Der Stundenplan Fetcher ist ein Bash-Skript, das entwickelt wurde, um Vertretungspläne von der Website der Beruflichen Schulen Korbach herunterzuladen und den extrahierten Text auf der Konsole anzuzeigen. Das Skript bietet auch die Möglichkeit, benutzerdefinierte Stundenpläne hinzuzufügen und Einstellungen zu ändern.
 
-## Verwendung
+## Verwendung (Nach dem Klonen des Repos)
 
 1. Führe das Skript aus und gib den gewünschten Tag an, um den Vertretungsplan herunterzuladen und anzuzeigen.
 
