@@ -81,7 +81,7 @@ if [ $# -eq 1 ]; then
     esac
 
     url="https://bs-korbach.de/images/vertretungsplan/${day}.pdf"
-    echo -e "\e[1;34m$url\e[0m"  # Light blue color for the URL
+    echo -e "\n\e[1;34m$url\e[0m"  # Light blue color for the URL
     
     # Use wget with credentials to download the PDF
     wget --user="$username" --password="$password" "$url" -O "$output_pdf" > /dev/null 2>&1
@@ -129,6 +129,11 @@ if [ $# -eq 1 ]; then
       }
     ' "$custom_lessons_file" "$output_text"
 
+    # Extract and print "Stand Upload" information
+    stand_upload_info=$(grep -oP 'Stand Upload:.*$' "$output_text")
+    echo "$stand_upload_info"
+    echo -e "\n"
+  
     # Clean up: remove the downloaded PDF and text file
     rm "$output_pdf"
     rm "$output_text"
@@ -154,7 +159,7 @@ case $input in
 esac
 
 url="https://bs-korbach.de/images/vertretungsplan/${day}.pdf"
-echo -e "\e[1;34m$url\e[0m"  # Light blue color for the URL
+echo -e "\n\e[1;34m$url\e[0m"  # Light blue color for the URL
 # Use wget with credentials to download the PDF
 wget --user="$username" --password="$password" "$url" -O "$output_pdf" > /dev/null 2>&1
 
@@ -201,8 +206,14 @@ awk -v green_color="$green_color" -v reset_color="$reset_color" -v print_all="$P
   }
 ' "$custom_lessons_file" "$output_text"
 
+
+# Extract and print "Stand Upload" information
+stand_upload_info=$(grep -oP 'Stand Upload:.*$' "$output_text")
+echo "$stand_upload_info"
+
 # Clean up: remove the downloaded PDF and text file
 rm "$output_pdf"
 rm "$output_text"
+
 
 echo "Extracted text saved to $output_text"
