@@ -5,7 +5,6 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 creds_file="${script_dir}/.pdf_creds.txt"
 output_pdf="${script_dir}/output.pdf"
 output_text="${script_dir}/extracted_text.txt"
-custom_lessons_file="${script_dir}/custom_lessons.txt"
 settings_file="${script_dir}/settings.txt"
 green_color='\033[0;32m'  # ANSI escape code for green
 reset_color='\033[0m'     # ANSI escape code to reset color
@@ -66,7 +65,12 @@ fi
 source "$settings_file"
 
 # Check if a day is provided as a command-line argument
-if [ $# -eq 1 ]; then
+if [ $# -eq 2 ]; then
+    # Additional parameter provided, use it for kurs list file
+    custom_lessons_file="${script_dir}/${2}_lessons.txt"
+fi
+
+if [ $# -eq 1 ] || [ $# -eq 2 ]; then
     case $1 in
       mo) day="montag";;
       di) day="dienstag";;
@@ -79,6 +83,14 @@ if [ $# -eq 1 ]; then
       *) echo "Invalid input. Please enter mo, di, mi, do, fr, 'set', or 'exit'."
          exit 1;;
     esac
+
+    # Set default custom lessons file name as owner_lessons.txt if no specific name is provided
+    if [ $# -eq 1 ]; then
+        custom_lessons_file="${script_dir}/owner_lessons.txt"
+    elif [ $# -eq 2 ]; then
+        # If a second parameter is provided, use it to name the lessons file
+        custom_lessons_file="${script_dir}/${2}_lessons.txt"
+    fi
 
     url="https://bs-korbach.de/images/vertretungsplan/${day}.pdf"
     echo -e "\n\e[1;34m$url\e[0m"  # Light blue color for the URL
@@ -214,6 +226,5 @@ echo "$stand_upload_info"
 # Clean up: remove the downloaded PDF and text file
 rm "$output_pdf"
 rm "$output_text"
-
 
 echo "Extracted text saved to $output_text"
