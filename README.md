@@ -1,60 +1,107 @@
-# Stundenplan Fetcher
+# StundenplanFetch
 
-## Beschreibung
+`stundenplanfetch.sh` is a Bash script designed to fetch the substitution plan and filter it. It is designed for the BS-Korbach website but it should be universally usable with little adjusments.
 
-Der Stundenplan Fetcher ist ein Bash-Skript, das entwickelt wurde, um Vertretungspläne von der Website der Beruflichen Schulen Korbach herunterzuladen und den extrahierten Text auf der Konsole anzuzeigen. Das Skript bietet auch die Möglichkeit, benutzerdefinierte Stundenpläne hinzuzufügen und Einstellungen zu ändern.
+## Prerequisites
 
-## Verwendung (Nach dem Klonen des Repos)
+- `wget` for downloading files.
+- `pdftotext` for converting PDF documents to plain text. This tool is typically part of the `poppler-utils` package.
+- `awk` for text processing.
 
-1. Führe das Skript aus und gib den gewünschten Tag an, um den Vertretungsplan herunterzuladen und anzuzeigen.
+## Installation
 
+1. **Clone the Repository:**
    ```bash
-   ./stundenplanfetch.sh mi
+   git clone https://your-repository-url.git
+   cd your-repository-directory
    ```
 
-2. Das Skript wird nach deinem Benutzernamen und Passwort fragen. Diese werden für den Download benötigt. Die Anmeldedaten werden in der Datei `.pdf_creds.txt` gespeichert.
-
-3. Füge am Ende deiner `.bashrc`-Datei folgendes hinzu:
-
+2. **Make the Script Executable:**
    ```bash
-   sudo nano[text editor deiner wahl] ~/.bashrc
+   chmod +x stundenplanfetch.sh
    ```
 
+3. **Install Required Packages:**
+   - For Debian/Ubuntu:
+     ```bash
+     sudo apt-get install wget poppler-utils
+     ```
+   - For Fedora:
+     ```bash
+     sudo dnf install wget poppler-utils
+     ```
+   - For Arch Linux:
+     ```bash
+     sudo pacman -S wget poppler-utils
+     ```
+
+## Configuration
+
+### Setting Up Credentials
+
+On the first run, the script will prompt you to enter your username and password, which it will store locally in a hidden file within the script directory. This information is used to authenticate when downloading the PDF.
+
+### Adding Custom Lessons
+
+To highlight custom lessons from the substitution plan:
+1. Run the script with the `add` command followed by the lesson identifier.
    ```bash
-   [...]
-   # Stundenplan
-   alias ausfall="$HOME/pfad/zum/programm/stundenplanfetch.sh"
+   ./stundenplanfetch.sh add
    ```
+2. Follow the prompts to enter the lesson identifiers (e.g., E2Ph_Pb23).
 
-## Nur deine Kurse
+### Modifying Settings
 
-1. Erstelle die Datei `custom_lessons.txt` im selbigen Ordner und füge deine Kurse hinzu, beispielsweise so:
-
-   ```plaintext
-   E2PRIN_Pa23
-   E2POWI_Pb23
-   E2ETHI_Pa23
-   E2G_Pd23
-   E2E_Pd23
-   E2D_Pd23
-   E2M_Pf23
-   E2BIO_Pf23
-   E2PH_Pb23
-   E2TKDV_Pa23
-   E2SPO_Pf23
-   E2ITEC_Pa23
-   ```
-
-2. Stelle ein, dass nur deine Kurse angezeigt werden:
-
+To change settings such as toggling the display of only highlighted lines:
+1. Run the script with the `set` command.
    ```bash
-   [nyox2stupid]$ ./stundenplanfetch.sh
-   Enter the day (mo, di, mi, do, fr), type 'set' for settings, or 'exit' to quit:
-   [nyox2stupid]$ set
-   Enter 1 to print all lines, or 0 to print only colored lines:
-   [nyox2stupid]$ 0
+   ./stundenplanfetch.sh set
+   ```
+2. Follow the prompts to modify the settings.
+
+## Usage
+
+To run the script, simply execute it with the day of the week as an argument:
+```bash
+./stundenplanfetch.sh mo
+```
+
+Supported day abbreviations are:
+- `mo` for Monday
+- `di` for Tuesday
+- `mi` for Wednesday
+- `do` for Thursday
+- `fr` for Friday
+
+## Setup Alias in .bashrc
+
+To make the script easier to run, you can add an alias in your `.bashrc` file:
+1. Open your `.bashrc`:
+   ```bash
+   nano ~/.bashrc
+   ```
+2. Add the following alias (modify the path to where your script is located):
+   ```bash
+   alias stplan='~/path_to_script/stundenplanfetch.sh'
+   ```
+3. Source your `.bashrc` to apply the changes:
+   ```bash
+   source ~/.bashrc
    ```
 
-## Hinweis
+Now, you can run the script using the `stplan` command followed by the day abbreviation:
+```bash
+stplan fr
+```
 
-Die extrahierten Textdateien (`output.pdf` und `extracted_text.txt`) werden nach der Anzeige gelöscht.
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a pull request.
+
+---
+
+This README provides a comprehensive guide for users to set up and effectively use your script. Adjust paths and URLs as necessary to fit the actual locations and user setup.
