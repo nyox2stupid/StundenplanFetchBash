@@ -93,15 +93,3 @@ Now, you can run the script using the `stplan` command followed by the day abbre
 ```bash
 stplan fr
 ```
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a pull request.
-
----
-
-This README provides a comprehensive guide for users to set up and effectively use your script. Adjust paths and URLs as necessary to fit the actual locations and user setup.
