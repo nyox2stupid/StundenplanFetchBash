@@ -12,8 +12,8 @@
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://your-repository-url.git
-   cd your-repository-directory
+   git clone https://github.com/nyox2stupid/StundenplanFetchBash.git
+   cd StundenplanFetchBash
    ```
 
 2. **Make the Script Executable:**
