@@ -106,7 +106,6 @@ main() {
     handle_pdf "$day"
     print_text
     echo "$(grep -oP 'Stand Upload:.*$' "$output_text")"
-    echo -e "\nExtracted text saved to $output_text"
     rm "$output_pdf" "$output_text"
 }
 
