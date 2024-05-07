@@ -55,6 +55,44 @@ handle_pdf() {
     fi
 }
 
+# Function to check for 'Ausfall' and send notification
+check_for_ausfall() {
+    local upload_info=$(grep -oP 'Stand Upload:.*$' "$output_text" | awk '{print $3, $5}')
+    awk -v pa="$PRINTALL" -v upload="$upload_info" '
+      BEGIN {IGNORECASE=1; ausfall_found=0}
+      NR==FNR {cust[$0]; next}  # Load custom lessons into array
+      /Ausfall/ {
+        line = $0;
+        gsub(/\*{6}/, "", line);  # Clean up the line
+        for (lesson in cust) {
+          if (index(line, lesson) > 0) {
+            ausfall_found=1;  # Mark Ausfall found
+            ausfall_lines = ausfall_lines (ausfall_lines ? "\n" : "") line;  # Collect Ausfall lines
+          }
+        }
+      }
+      END {
+        if (ausfall_found)
+          system("notify-send \"Ausfall\" \"" ausfall_lines "\nUpload: " upload "\"");
+        else
+          print "Kein Ausfall - Upload: " upload;
+      }
+    ' "$custom_lessons_file" "$output_text"
+}
+
+get_current_day() {
+    local day_name=$(date +%A)
+    case "$day_name" in
+        Monday) echo "mo" ;;
+        Tuesday) echo "di" ;;
+        Wednesday) echo "mi" ;;
+        Thursday) echo "do" ;;
+        Friday) echo "fr" ;;
+        Saturday) echo "mo" ;;  # Assuming Monday's schedule on Saturdays
+        Sunday) echo "mo" ;;  # Assuming Monday's schedule on Sundays
+    esac
+}
+
 # Print extracted text with options
 print_text() {
     awk -v gc="$green_color" -v rc="$reset_color" -v pa="$PRINTALL" '
@@ -91,23 +129,50 @@ main() {
     source "$settings_file"
 
     local day=""
-    case $1 in
-        mo) day="montag";;
-        di) day="dienstag";;
-        mi) day="mittwoch";;
-        do) day="donnerstag";;
-        fr) day="freitag";;
-        set) change_settings; return;;
-        exit) exit 0;;
-        *) echo "Invalid input. Please enter mo, di, mi, do, fr, 'set', or 'exit'."; exit 1;;
-    esac
+    local mode="$1"
+    local owner="${2:-owner}"
 
-    custom_lessons_file="${script_dir}/${2:-owner}_lessons.txt"
-    handle_pdf "$day"
-    print_text
-    echo "$(grep -oP 'Stand Upload:.*$' "$output_text")"
-    rm "$output_pdf" "$output_text"
+    if [[ $mode == "noti" ]]; then
+        # Check if a specific day is given, if not, use current day
+        if [[ -n $2 && $2 =~ ^(mo|di|mi|do|fr)$ ]]; then
+            day=$(translate_day "$2")
+            owner="${3:-owner}"
+        else
+            day=$(translate_day "$(get_current_day)")
+        fi
+        custom_lessons_file="${script_dir}/${owner}_lessons.txt"
+        handle_pdf "$day"
+        check_for_ausfall
+        rm "$output_pdf" "$output_text"
+    else
+        case $mode in
+            mo|di|mi|do|fr)
+                day=$(translate_day "$mode")
+                custom_lessons_file="${script_dir}/${owner}_lessons.txt"
+                handle_pdf "$day"
+                print_text
+                rm "$output_pdf" "$output_text"
+                ;;
+            set) 
+                change_settings
+                ;;
+            exit) 
+                exit 0
+                ;;
+            *) 
+                echo "Invalid input. Please enter 'noti', mo, di, mi, do, fr, 'set', or 'exit'."
+                exit 1
+                ;;
+        esac
+    fi
 }
+
+
+translate_day() {
+    declare -A days=( ["mo"]="montag" ["di"]="dienstag" ["mi"]="mittwoch" ["do"]="donnerstag" ["fr"]="freitag" )
+    echo "${days[$1]}"
+}
+
 
 # Input processing
 if [ $# -eq 0 ]; then
