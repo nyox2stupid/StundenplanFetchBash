@@ -75,7 +75,7 @@ check_for_ausfall() {
         if (ausfall_found)
           system("notify-send \"Ausfall\" \"" ausfall_lines "\nUpload: " upload "\"");
         else
-          print "Kein Ausfall - Upload: " upload;
+          system("notify-send \"Kein Ausfall\" \"\nUpload: " upload "\"");
       }
     ' "$custom_lessons_file" "$output_text"
 }
@@ -94,8 +94,9 @@ get_current_day() {
 }
 
 # Print extracted text with options
-print_text() {
-    awk -v gc="$green_color" -v rc="$reset_color" -v pa="$PRINTALL" '
+print_text() {    
+    local upload_info=$(grep -oP 'Stand Upload:.*$' "$output_text" | awk '{print $3, $5}')
+    awk -v gc="$green_color" -v rc="$reset_color" -v pa="$PRINTALL" -v upload="$upload_info" '
       BEGIN {IGNORECASE=1}
       NR==FNR {cust[$0]; next}  # Load custom lessons into array
       {
@@ -107,7 +108,7 @@ print_text() {
           if (index(line, lesson) > 0) {
             print_line = 1;  # Mark line for printing
             if (!pa) {
-              print gc line rc;  # Print colored line if not printing all
+              print gc line rc "\nUpload:" upload "\n";  # Print colored line if not printing all
               next;
             }
           }
